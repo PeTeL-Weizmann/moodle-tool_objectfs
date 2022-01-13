@@ -46,8 +46,6 @@ class client extends object_client_base {
     const MAX_TEMP_LIMIT = 2097152;
 
     protected $client;
-    protected $bucket;
-    private $signingmethod;
 
     public function __construct($config) {
         global $CFG;
@@ -65,6 +63,14 @@ class client extends object_client_base {
             $this->enablepresignedurls = $config->enablepresignedurls;
             $this->signingmethod = $config->signingmethod;
             $this->bucketkeyprefix = $config->key_prefix;
+            $this->cloudfrontresourcedomain = $config->cloudfrontresourcedomain;
+
+            if ('cf' === $this->signingmethod) {
+                if (!$this->cloudfrontresourcedomain) {
+                    throw new \moodle_exception(OBJECTFS_PLUGIN_NAME . ': cloudfrontresourcedomain not configured');
+                }
+            }
+
             $this->set_client($config);
         } else {
             parent::__construct($config);
@@ -491,7 +497,7 @@ class client extends object_client_base {
         if ($nicefilename) {
             $key .= $this->get_nice_filename($headers);
         }
-        $resource = $this->config->cloudfrontresourcedomain . '/' . $key;
+        $resource = $this->cloudfrontresourcedomain . '/' . $key;
         // This is the id of the Cloudfront key pair you generated.
         $keypairid = $this->config->cloudfrontkeypairid;
 
